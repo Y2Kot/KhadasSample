@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">KhadasSample</string>
+    <string name="grant_permission_rationale">The camera is important. Grant the permission!</string>
+    <string name="ok">Ok!</string>
+    <string name="cancel">Cancel</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="grant_in_settings">Camera permission was denied. Please grant permission in settings screen</string>
+    <string name="feature_not_available">Feature is not available!</string>
+</resources>
