@@ -7,21 +7,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -29,7 +26,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.khadassample.ui.theme.KhadasSampleTheme
@@ -45,7 +41,6 @@ import com.otaliastudios.cameraview.controls.Mode
 import com.otaliastudios.cameraview.filter.Filter
 import com.otaliastudios.cameraview.filter.Filters
 import com.otaliastudios.cameraview.frame.FrameProcessor
-import kotlinx.coroutines.flow.filterNotNull
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,12 +134,15 @@ fun CameraPermissionNotAvailableContent(
     }
 }
 
+data class CameraState(val facing: Facing = Facing.BACK)
+
 @Composable
 fun CameraPreviewScreen(
     modifier: Modifier = Modifier,
     viewModel: MainScreenViewModel
 ) {
     val images = viewModel.frames.collectAsState()
+    var cameraState by remember { mutableStateOf(CameraState()) }
     Column {
         Text(text = "Camera:")
         CameraViewWrapper(
@@ -152,7 +150,8 @@ fun CameraPreviewScreen(
                 .weight(1f)
                 .fillMaxWidth(),
             cameraListener = viewModel.cameraListener,
-            frameProcessor = viewModel.frameProcessor
+            frameProcessor = viewModel.frameProcessor,
+            cameraFacing = cameraState.facing
         )
         Text(text = "Frame processor:")
         BitmapImage(
@@ -161,6 +160,15 @@ fun CameraPreviewScreen(
                 .weight(1f)
                 .fillMaxWidth(),
         )
+        Button(onClick = {
+            cameraState = if (cameraState.facing == Facing.BACK) {
+                cameraState.copy(facing = Facing.FRONT)
+            } else {
+                cameraState.copy(facing = Facing.BACK)
+            }
+        }) {
+            Text(text = "Switch camera")
+        }
     }
 }
 
@@ -170,7 +178,7 @@ fun CameraViewWrapper(
     filter: Filter = Filters.NONE.newInstance(),
     cameraFacing: Facing = Facing.BACK,
     cameraListener: CameraListener = object : CameraListener() {},
-    frameProcessor: FrameProcessor = FrameProcessor { }
+    frameProcessor: FrameProcessor = FrameProcessor { },
 ) {
     val currentLifecycleOwner = LocalLifecycleOwner.current
     AndroidView(
@@ -188,6 +196,9 @@ fun CameraViewWrapper(
                 setFilter(filter)
                 addFrameProcessor(frameProcessor)
             }
+        },
+        update = {
+            it.facing = cameraFacing
         }
     )
 }
